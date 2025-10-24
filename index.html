@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoutier Pro - Live HTML Email Editor</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Remixicons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        .email-preview {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .template-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .template-card:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        .template-card.active {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        .code-editor {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-green-600">🚀 Scoutier Pro</h1>
+            <p class="text-gray-600">Live HTML Email Editor - Create & Send Beautiful Templates</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+            <!-- Left Column: Template Management & Editing -->
+            <div class="space-y-6">
+                <!-- Template Selection -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i class="ri-layout-3-line text-blue-500"></i>
+                        Choose or Create Template
+                    </h2>
+                    
+                    <!-- Quick Template Buttons -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <button onclick="loadTemplate('shopify')" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">
+                            🛍️ Shopify Template
+                        </button>
+                        <button onclick="loadTemplate('blank')" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">
+                            📝 Blank Template
+                        </button>
+                    </div>
+
+                    <!-- Saved Templates -->
+                    <div class="mb-4">
+                        <h3 class="font-semibold mb-2">Your Templates</h3>
+                        <div id="savedTemplates" class="space-y-2">
+                            <!-- Templates will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Save Template Section -->
+                    <div class="border-t pt-4">
+                        <div class="flex gap-2 mb-3">
+                            <input 
+                                type="text" 
+                                id="templateName" 
+                                placeholder="Template name" 
+                                class="flex-1 p-2 border rounded-lg"
+                            >
+                            <button onclick="saveTemplate()" class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600 transition">
+                                💾 Save
+                            </button>
+                        </div>
+                        <button onclick="deleteTemplate()" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+                            🗑️ Delete Current Template
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Email Configuration -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i class="ri-settings-3-line text-purple-500"></i>
+                        Email Configuration
+                    </h2>
+                    
+                    <!-- Recipients -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            📧 Recipients (one email per line)
+                        </label>
+                        <textarea 
+                            id="recipients" 
+                            rows="4" 
+                            class="w-full p-3 border border-gray-300 rounded-lg"
+                            placeholder="john@company.com&#10;jane@startup.com&#10;mike@business.com"
+                        ></textarea>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <span id="recipientCount">0</span> emails loaded
+                        </div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            📝 Email Subject
+                        </label>
+                        <input 
+                            type="text" 
+                            id="subject" 
+                            class="w-full p-3 border border-gray-300 rounded-lg"
+                            value="URGENT: Shopify Account Flagged - Section 14.3 Review Required"
+                        >
+                    </div>
+
+                    <!-- Sender Info -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            👤 Sender Name
+                        </label>
+                        <input 
+                            type="text" 
+                            id="senderName" 
+                            class="w-full p-3 border border-gray-300 rounded-lg"
+                            value="Shopify Risk Management"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: HTML Editor & Preview -->
+            <div class="space-y-6">
+                <!-- HTML Editor -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <i class="ri-code-s-slash-line text-orange-500"></i>
+                            HTML Editor
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="formatHTML()" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">
+                                🧹 Format
+                            </button>
+                            <button onclick="previewEmail()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                                👁️ Preview
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <textarea 
+                        id="htmlContent" 
+                        rows="20" 
+                        class="w-full p-4 border border-gray-300 rounded-lg code-editor"
+                        placeholder="Paste or write your HTML email template here...&#10;&#10;Use variables:&#10;{name} - Recipient's name&#10;{email} - Recipient's email&#10;{company} - Company name&#10;{date} - Current date&#10;{sender} - Sender name"
+                    ></textarea>
+                    
+                    <!-- Variable Helper -->
+                    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <h4 class="font-semibold mb-2">💡 Available Variables:</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <code class="bg-white p-1 rounded border">{name}</code>
+                            <code class="bg-white p-1 rounded border">{email}</code>
+                            <code class="bg-white p-1 rounded border">{company}</code>
+                            <code class="bg-white p-1 rounded border">{date}</code>
+                            <code class="bg-white p-1 rounded border">{sender}</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <button 
+                            onclick="testEmail()" 
+                            class="bg-purple-600 text-white py-4 px-6 rounded-lg hover:bg-purple-700 transition text-lg font-semibold"
+                        >
+                            🧪 Send Test Email
+                        </button>
+                        <button 
+                            onclick="sendBulkEmails()" 
+                            class="bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold"
+                        >
+                            🚀 Send Bulk Campaign
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">📧 Email Preview</h3>
+                    <button onclick="closePreview()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+                <div id="emailPreview" class="email-preview"></div>
+                <div class="mt-4 text-center">
+                    <button onclick="closePreview()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                        Close Preview
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div id="progress" class="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center gap-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+            <div>
+                <div id="progressText" class="font-semibold">Sending emails...</div>
+                <div id="progressDetail" class="text-sm text-gray-600">Preparing campaign</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Templates
+        const defaultTemplates = {
+            shopify: {
+                name: "Shopify Risk Management",
+                subject: "URGENT: Shopify Account Flagged - Section 14.3 Review Required",
+                html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shopify Account Notification</title>
+</head>
+<body style="font-family: Helvetica,Arial,sans-serif; color:#202223; line-height:1.7; font-size:15px; background-color:#f6f6f6; margin:0; padding:20px;">
+    <div style="max-width:600px; margin:auto; background-color:#ffffff; border:1px solid #e1e3e5; border-radius:8px; overflow:hidden;">
+        <div style="background-color:#f9fafb; padding:20px 24px; border-bottom:1px solid #e1e3e5; display:flex; align-items:center;">
+            <img src="https://cdn.shopify.com/static/images/logos/shopify-bag.png" alt="Shopify Logo" width="28" height="28" style="margin-right:8px;">
+            <span style="font-size:17px; font-weight:600; color:#202223;">Shopify</span>
+        </div>
+        <div style="padding:28px;">
+            <p>Dear {name},</p>
+            <p>Your Shopify account has been flagged under <strong>Section 14.3 of Shopify Terms of Use</strong> due to backend integration errors and missing operational security configurations.</p>
+            <p>To address this matter, please click the button below or reply with <strong>"APPEAL"</strong> to receive step-by-step resolution guidance.</p>
+            <div style="text-align:center; margin:40px 0;">
+                <a href="mailto:mailer.shopifyriskmanagement1@gmail.com?subject=APPEAL%20Request%20-%20Section%2014.3%20Flag%20-%20{name}"
+                   style="display:inline-block; background-color:#008060; color:#ffffff; text-decoration:none; font-weight:600; padding:16px 48px; border-radius:10px; font-size:16px;">
+                   APPEAL
+                </a>
+            </div>
+            <p style="color:#b30000; font-weight:600;">⚠️ Your response window expires in 48 hours. Please submit your appeal promptly to avoid permanent account closure.</p>
+            <p>We're here to help.</p>
+            <p>Best regards,<br><strong>{sender}</strong></p>
+        </div>
+        <div style="background-color:#f9fafb; border-top:1px solid #e1e3e5; padding:20px 24px; text-align:center; font-size:13px; color:#6d7175;">
+            <p style="margin:4px 0;">This message was sent from <strong>{sender}</strong>.</p>
+            <p style="margin:4px 0;">© Shopify Inc. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>`
+            },
+            blank: {
+                name: "Blank Template",
+                subject: "Your Email Subject Here",
+                html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Template</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f6f6f6; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div style="background: #4F46E5; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Your Company</h1>
+        </div>
+        <div style="padding: 30px;">
+            <p>Hello {name},</p>
+            <p>This is your email content. You can customize this template as needed.</p>
+            <p>Best regards,<br><strong>{sender}</strong></p>
+        </div>
+        <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 12px;">
+            <p>Sent by {sender} • {date}</p>
+        </div>
+    </div>
+</body>
+</html>`
+            }
+        };
+
+        // Current state
+        let currentTemplateId = null;
+        let userTemplates = {};
+
+        // Initialize the application
+        function init() {
+            loadUserTemplates();
+            loadTemplate('shopify');
+            setupEventListeners();
+        }
+
+        // Load user templates from localStorage
+        function loadUserTemplates() {
+            const saved = localStorage.getItem('scoutierTemplates');
+            userTemplates = saved ? JSON.parse(saved) : {};
+            renderSavedTemplates();
+        }
+
+        // Save templates to localStorage
+        function saveUserTemplates() {
+            localStorage.setItem('scoutierTemplates', JSON.stringify(userTemplates));
+        }
+
+        // Render saved templates list
+        function renderSavedTemplates() {
+            const container = document.getElementById('savedTemplates');
+            container.innerHTML = '';
+
+            Object.entries(userTemplates).forEach(([id, template]) => {
+                const div = document.createElement('div');
+                div.className = `template-card ${currentTemplateId === id ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="font-semibold">${template.name}</div>
+                    <div class="text-xs text-gray-500">${new Date(template.updated).toLocaleDateString()}</div>
+                `;
+                div.onclick = () => loadUserTemplate(id);
+                container.appendChild(div);
+            });
+
+            if (Object.keys(userTemplates).length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-4">No saved templates yet</div>';
+            }
+        }
+
+        // Load a default template
+        function loadTemplate(templateKey) {
+            const template = defaultTemplates[templateKey];
+            if (template) {
+                document.getElementById('htmlContent').value = template.html;
+                document.getElementById('subject').value = template.subject;
+                document.getElementById('senderName').value = templateKey === 'shopify' ? 'Shopify Risk Management' : 'Your Name';
+                currentTemplateId = null;
+                updateTemplateNameInput();
+            }
+        }
+
+        // Load a user template
+        function loadUserTemplate(templateId) {
+            const template = userTemplates[templateId];
+            if (template) {
+                document.getElementById('htmlContent').value = template.html;
+                document.getElementById('subject').value = template.subject;
+                document.getElementById('senderName').value = template.sender || 'Your Name';
+                currentTemplateId = templateId;
+                updateTemplateNameInput();
+                renderSavedTemplates();
+            }
+        }
+
+        // Update template name input
+        function updateTemplateNameInput() {
+            const nameInput = document.getElementById('templateName');
+            if (currentTemplateId && userTemplates[currentTemplateId]) {
+                nameInput.value = userTemplates[currentTemplateId].name;
+            } else {
+                nameInput.value = '';
+            }
+        }
+
+        // Save current template
+        function saveTemplate() {
+            const name = document.getElementById('templateName').value.trim();
+            if (!name) {
+                alert('Please enter a template name');
+                return;
+            }
+
+            const templateId = currentTemplateId || Date.now().toString();
+            userTemplates[templateId] = {
+                name: name,
+                html: document.getElementById('htmlContent').value,
+                subject: document.getElementById('subject').value,
+                sender: document.getElementById('senderName').value,
+                updated: new Date().toISOString()
+            };
+
+            currentTemplateId = templateId;
+            saveUserTemplates();
+            renderSavedTemplates();
+            
+            showNotification('Template saved successfully!', 'success');
+        }
+
+        // Delete current template
+        function deleteTemplate() {
+            if (currentTemplateId && userTemplates[currentTemplateId]) {
+                if (confirm(`Delete template "${userTemplates[currentTemplateId].name}"?`)) {
+                    delete userTemplates[currentTemplateId];
+                    currentTemplateId = null;
+                    saveUserTemplates();
+                    renderSavedTemplates();
+                    loadTemplate('blank');
+                    showNotification('Template deleted', 'info');
+                }
+            } else {
+                alert('No template selected to delete');
+            }
+        }
+
+        // Format HTML code
+        function formatHTML() {
+            // Simple formatting - you can enhance this with a proper formatter
+            const textarea = document.getElementById('htmlContent');
+            const formatted = textarea.value
+                .replace(/>\s+</g, '>\n<')
+                .replace(/\s+/g, ' ')
+                .replace(/> /g, '>')
+                .replace( </g, '<');
+            textarea.value = formatted;
+            showNotification('HTML formatted', 'info');
+        }
+
+        // Preview email
+        function previewEmail() {
+            const htmlContent = document.getElementById('htmlContent').value;
+            const previewElement = document.getElementById('emailPreview');
+            
+            // Personalize with sample data
+            const personalizedHTML = htmlContent
+                .replace(/{name}/g, 'John Doe')
+                .replace(/{email}/g, 'john.doe@example.com')
+                .replace(/{company}/g, 'Example Corp')
+                .replace(/{date}/g, new Date().toLocaleDateString())
+                .replace(/{sender}/g, document.getElementById('senderName').value);
+            
+            previewElement.innerHTML = personalizedHTML;
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        // Test email function
+        async function testEmail() {
+            const testEmail = prompt('Enter your email address for testing:');
+            if (!testEmail || !isValidEmail(testEmail)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            await sendSingleEmail(testEmail, true);
+        }
+
+        // Bulk email sending
+        async function sendBulkEmails() {
+            const recipients = document.getElementById('recipients').value.split('\n').filter(email => email.trim());
+            
+            if (recipients.length === 0) {
+                alert('Please add at least one recipient email.');
+                return;
+            }
+
+            if (!confirm(`Send campaign to ${recipients.length} recipients?`)) {
+                return;
+            }
+
+            // Show progress
+            document.getElementById('progress').classList.remove('hidden');
+            
+            let sentCount = 0;
+            let failedCount = 0;
+
+            for (let i = 0; i < recipients.length; i++) {
+                const email = recipients[i].trim();
+                
+                if (!isValidEmail(email)) {
+                    failedCount++;
+                    continue;
+                }
+
+                document.getElementById('progressText').textContent = `Sending emails...`;
+                document.getElementById('progressDetail').textContent = `${i + 1}/${recipients.length} (${sentCount} sent, ${failedCount} failed)`;
+
+                try {
+                    await sendSingleEmail(email, false);
+                    sentCount++;
+                } catch (error) {
+                    failedCount++;
+                }
+
+                // Rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            document.getElementById('progress').classList.add('hidden');
+            showNotification(`Campaign completed! Sent: ${sentCount}, Failed: ${failedCount}`, 'success');
+        }
+
+        // Send single email
+        async function sendSingleEmail(email, isTest = false) {
+            const subject = document.getElementById('subject').value;
+            const htmlContent = document.getElementById('htmlContent').value;
+            const senderName = document.getElementById('senderName').value;
+
+            // Personalize the HTML
+            const name = extractNameFromEmail(email);
+            const personalizedHTML = htmlContent
+                .replace(/{name}/g, name)
+                .replace(/{email}/g, email)
+                .replace(/{company}/g, extractCompanyFromEmail(email))
+                .replace(/{date}/g, new Date().toLocaleDateString())
+                .replace(/{sender}/g, senderName);
+
+            // This is where you'd integrate with your email service
+            // For now, we'll simulate the API call
+            console.log('Sending email to:', email);
+            console.log('Subject:', subject);
+            
+            // Simulate API call to Netlify function
+            try {
+                const response = await fetch('/.netlify/functions/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: email,
+                        subject: subject,
+                        html: personalizedHTML,
+                        isTest: isTest
+                    })
+                });
+
+                if (!response.ok) throw new Error('Send failed');
+                
+                if (isTest) {
+                    showNotification('Test email sent successfully!', 'success');
+                }
+                return true;
+            } catch (error) {
+                if (isTest) {
+                    showNotification('Failed to send test email', 'error');
+                }
+                throw error;
+            }
+        }
+
+        // Utility functions
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function extractNameFromEmail(email) {
+            const namePart = email.split('@')[0];
+            const name = namePart.split('.')[0] || namePart.split('_')[0] || namePart;
+            return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        function extractCompanyFromEmail(email) {
+            const domain = email.split('@')[1]?.split('.')[0] || 'Company';
+            return domain.charAt(0).toUpperCase() + domain.slice(1);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification - you can enhance this
+            alert(message);
+        }
+
+        function setupEventListeners() {
+            // Update recipient count
+            document.getElementById('recipients').addEventListener('input', function() {
+                const count = this.value.split('\n').filter(email => email.trim()).length;
+                document.getElementById('recipientCount').textContent = count;
+            });
+
+            // Initialize recipient count
+            document.getElementById('recipients').dispatchEvent(new Event('input'));
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
